@@ -1,0 +1,1002 @@
+================================================================================
+FOUNDRY VTT APPLICATIONV2 - VOLLSTÄNDIGE ANLEITUNG
+================================================================================
+
+Stand: Foundry VTT V12-V13
+Letzte Aktualisierung: November 2024
+
+================================================================================
+INHALTSVERZEICHNIS
+================================================================================
+
+1. Übersicht und Einführung
+2. Wann ApplicationV2 verwenden
+3. Grundlegende Klassenstruktur
+4. DEFAULT_OPTIONS (alle Eigenschaften)
+5. PARTS Konfiguration
+6. Lifecycle-Methoden
+7. Form-Handling
+8. Actions-System
+9. Tabs-System
+10. Migration von V1 zu V2
+11. Häufige Fehler und Tipps
+12. Vollständige Beispiele
+
+================================================================================
+1. ÜBERSICHT UND EINFÜHRUNG
+================================================================================
+
+ApplicationV2 ist das neue UI-Framework in Foundry VTT, das ab Version 12
+eingeführt wurde. Es ersetzt die alte Application/FormApplication-Klasse mit
+einem moderneren, flexibleren Ansatz.
+
+WICHTIGE ZEITLINIE:
+- V12: ApplicationV2 eingeführt
+- V15: Letzte Version mit Application V1 Support
+- V16: Application V1 wird entfernt
+
+HAUPTVORTEILE VON V2:
+- Modulares Template-System (PARTS)
+- Natives Form-Handling ohne Subklasse
+- Verbessertes Lifecycle-Management
+- Actions-System für Event-Binding
+- Partial Re-Rendering
+- Kein jQuery mehr (pure DOM)
+
+================================================================================
+2. WANN APPLICATIONV2 VERWENDEN
+================================================================================
+
+VERWENDE APPLICATIONV2 FÜR:
+- Neue Module/Systeme
+- Dialoge und Formulare
+- Actor/Item Sheets
+- Konfigurationsfenster
+- Jede neue UI-Komponente
+
+AUSNAHMEN:
+- Wenn du V10-Kompatibilität benötigst (V2 erst ab V12)
+- Bei sehr einfachen Dialogs kann DialogV2 ausreichen
+
+================================================================================
+3. GRUNDLEGENDE KLASSENSTRUKTUR
+================================================================================
+
+IMPORT:
+--------
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+KLASSEN-DEFINITION:
+-------------------
+class MeineApp extends HandlebarsApplicationMixin(ApplicationV2) {
+
+  // Statische Konfiguration
+  static DEFAULT_OPTIONS = { ... };
+
+  // Template-Konfiguration
+  static PARTS = { ... };
+
+  // Konstruktor (optional)
+  constructor(options = {}) {
+    super(options);
+    this.meineDaten = options.daten;
+  }
+
+  // Daten für Template vorbereiten
+  async _prepareContext(options) {
+    return { ... };
+  }
+
+  // Nach dem Rendern (Event Listener etc.)
+  _onRender(context, options) {
+    // DOM-Manipulation hier
+  }
+}
+
+INSTANZIIERUNG:
+---------------
+const app = new MeineApp({ daten: meineDaten });
+app.render(true);
+
+================================================================================
+4. DEFAULT_OPTIONS (ALLE EIGENSCHAFTEN)
+================================================================================
+
+static DEFAULT_OPTIONS = {
+
+  // === GRUNDLEGENDE OPTIONEN ===
+
+  id: "meine-app-id",              // Eindeutige ID für die Application
+  classes: ["mein-modul", "sheet"], // CSS-Klassen für das Element
+  tag: "div",                       // HTML-Tag ("div" oder "form")
+
+  // === FENSTER-OPTIONEN ===
+
+  window: {
+    title: "Mein Titel",           // Fenstertitel (oder i18n-Key)
+    icon: "fas fa-cog",            // Icon im Header
+    resizable: true,               // Größe änderbar
+    minimizable: true,             // Minimierbar
+    frame: true,                   // Mit Fensterrahmen
+    positioned: true,              // Position gespeichert
+    controls: []                   // Header-Buttons
+  },
+
+  // === POSITION ===
+
+  position: {
+    width: 600,                    // Breite in Pixel
+    height: 400,                   // Höhe in Pixel oder "auto"
+    top: null,                     // Position von oben
+    left: null,                    // Position von links
+    scale: 1                       // Skalierung
+  },
+
+  // === FORM-OPTIONEN (wenn tag: "form") ===
+
+  form: {
+    handler: MeineApp.#onFormSubmit,  // Submit-Handler
+    closeOnSubmit: true,              // Nach Submit schließen
+    submitOnChange: false             // Bei jeder Änderung submitten
+  },
+
+  // === ACTIONS (Event-Binding) ===
+
+  actions: {
+    meineAktion: MeineApp.#onMeineAktion,
+    andereAktion: MeineApp.andereAktion
+  }
+};
+
+================================================================================
+5. PARTS KONFIGURATION
+================================================================================
+
+PARTS definiert die Template-Teile der Application. Jedes Part wird separat
+gerendert und kann einzeln aktualisiert werden.
+
+GRUNDSTRUKTUR:
+--------------
+static PARTS = {
+  hauptteil: {
+    template: "modules/mein-modul/templates/main.hbs"
+  }
+};
+
+ERWEITERTE OPTIONEN:
+--------------------
+static PARTS = {
+  header: {
+    template: "modules/mein-modul/templates/header.hbs",
+    id: "app-header",              // HTML ID für dieses Part
+    classes: ["header-section"],    // Zusätzliche CSS-Klassen
+    scrollable: []                  // Keine scrollbaren Elemente
+  },
+
+  inhalt: {
+    template: "modules/mein-modul/templates/content.hbs",
+    scrollable: [""]               // Gesamtes Part scrollbar
+  },
+
+  liste: {
+    template: "modules/mein-modul/templates/list.hbs",
+    scrollable: [".item-list"]     // Nur .item-list scrollbar
+  }
+};
+
+WICHTIG:
+- Die Reihenfolge der PARTS bestimmt die Render-Reihenfolge
+- Scroll-Position wird bei Re-Render beibehalten
+- Keine <form>-Tags in Templates wenn tag: "form" verwendet wird!
+
+================================================================================
+6. LIFECYCLE-METHODEN
+================================================================================
+
+ApplicationV2 bietet viele Lifecycle-Hooks für verschiedene Phasen:
+
+RENDER-LIFECYCLE:
+-----------------
+
+1. _prepareContext(options)
+   - Bereitet Daten für das Template vor
+   - Ersetzt getData() aus V1
+   - Async möglich
+
+   async _prepareContext(options) {
+     const context = await super._prepareContext(options);
+     context.items = this.document.items;
+     context.enrichedBio = await TextEditor.enrichHTML(this.document.system.bio);
+     return context;
+   }
+
+2. _configureRenderOptions(options)
+   - Konfiguriert welche PARTS gerendert werden
+   - Für partial re-renders
+
+   _configureRenderOptions(options) {
+     super._configureRenderOptions(options);
+     if (options.parts) options.parts = ["content"]; // Nur content rendern
+   }
+
+3. _onRender(context, options)
+   - Nach dem Rendern aufgerufen
+   - Ersetzt activateListeners() aus V1
+   - Hier Event Listener hinzufügen
+
+   _onRender(context, options) {
+     this.element.querySelector("input[name=name]")
+       .addEventListener("change", this._onNameChange.bind(this));
+   }
+
+4. _onFirstRender(context, options)
+   - Nur beim ersten Render aufgerufen
+   - Einmalige Initialisierung
+
+   _onFirstRender(context, options) {
+     this.#initializeChart();
+   }
+
+CLOSE-LIFECYCLE:
+----------------
+
+5. _onClose(options)
+   - Vor dem Schließen aufgerufen
+   - Cleanup-Logik hier
+
+   _onClose(options) {
+     this.#saveState();
+   }
+
+POSITION-LIFECYCLE:
+-------------------
+
+6. _onPosition(position)
+   - Nach Positionsänderung
+
+   _onPosition(position) {
+     console.log("Neue Position:", position);
+   }
+
+HOOKS:
+------
+Du kannst auch Hooks für alle Instanzen einer Klasse registrieren:
+
+Hooks.on("renderMeineApp", (app, html, context) => {
+  // Wird für jede MeineApp-Instanz aufgerufen
+});
+
+================================================================================
+7. FORM-HANDLING
+================================================================================
+
+ApplicationV2 hat natives Form-Handling eingebaut.
+
+KONFIGURATION:
+--------------
+static DEFAULT_OPTIONS = {
+  tag: "form",  // WICHTIG: Application als Form
+  form: {
+    handler: MeineApp.#onFormSubmit,
+    closeOnSubmit: true,
+    submitOnChange: false
+  }
+};
+
+FORM-HANDLER:
+-------------
+static async #onFormSubmit(event, form, formData) {
+  // event - Das Submit-Event
+  // form - Das Form-Element
+  // formData - FormDataExtended-Objekt
+
+  const data = formData.object;  // Expandierte Form-Daten
+
+  // Beispiel: Daten speichern
+  await this.document.update(data);
+
+  // Oder Settings speichern
+  const expanded = foundry.utils.expandObject(data);
+  await game.settings.set("mein-modul", "config", expanded);
+}
+
+FORMDATA STRUKTUR:
+------------------
+formData ist ein FormDataExtended-Objekt:
+- formData.object - Expandierte Daten als Objekt
+- formData.entries() - Iterator über Einträge
+
+Beispiel für verschachtelte Daten:
+<input name="system.stats.str" value="10">
+<input name="system.stats.dex" value="15">
+
+formData.object ergibt:
+{
+  system: {
+    stats: {
+      str: "10",
+      dex: "15"
+    }
+  }
+}
+
+TEMPLATE OHNE <form>:
+---------------------
+WICHTIG: Wenn tag: "form" gesetzt ist, darf das Template KEIN <form>-Tag
+enthalten! ApplicationV2 erstellt das Form automatisch.
+
+FALSCH:
+<form class="meine-form">
+  <input name="test">
+</form>
+
+RICHTIG:
+<div class="meine-form">
+  <input name="test">
+</div>
+
+================================================================================
+8. ACTIONS-SYSTEM
+================================================================================
+
+Actions ersetzen manuelle Event Listener für Click-Events.
+
+KONFIGURATION:
+--------------
+static DEFAULT_OPTIONS = {
+  actions: {
+    editItem: MeineApp.#onEditItem,
+    deleteItem: MeineApp.#onDeleteItem,
+    toggleMode: MeineApp.toggleMode  // Kann auch non-private sein
+  }
+};
+
+ACTION-HANDLER:
+---------------
+// Statische Methode, aber 'this' zeigt auf die Instanz!
+static #onEditItem(event, target) {
+  // event - Das Click-Event
+  // target - Das Element mit data-action
+
+  const itemId = target.dataset.itemId;
+  const item = this.document.items.get(itemId);
+  item.sheet.render(true);
+}
+
+static async #onDeleteItem(event, target) {
+  const itemId = target.dataset.itemId;
+  await this.document.deleteEmbeddedDocuments("Item", [itemId]);
+}
+
+TEMPLATE MIT ACTIONS:
+---------------------
+<div class="item-list">
+  {{#each items}}
+    <div class="item">
+      <span>{{this.name}}</span>
+      <button type="button" data-action="editItem" data-item-id="{{this.id}}">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button type="button" data-action="deleteItem" data-item-id="{{this.id}}">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+  {{/each}}
+</div>
+
+WICHTIG:
+- data-action muss dem Key in actions entsprechen
+- Zusätzliche data-* Attribute werden über target.dataset verfügbar
+- Actions funktionieren nur für Click-Events
+- Für andere Events (change, input, etc.) nutze _onRender()
+
+================================================================================
+9. TABS-SYSTEM
+================================================================================
+
+ApplicationV2 unterstützt Tabs nativ.
+
+KONFIGURATION:
+--------------
+static DEFAULT_OPTIONS = {
+  // ... andere Optionen
+};
+
+static PARTS = {
+  header: {
+    template: "templates/header.hbs"
+  },
+  tabs: {
+    template: "templates/generic/tab-navigation.hbs"
+  },
+  eigenschaften: {
+    template: "templates/eigenschaften.hbs",
+    scrollable: [""]
+  },
+  inventar: {
+    template: "templates/inventar.hbs",
+    scrollable: [""]
+  }
+};
+
+// Tab-Gruppen definieren
+tabGroups = {
+  primary: "eigenschaften"  // Standard-Tab
+};
+
+KONTEXT VORBEREITEN:
+--------------------
+async _prepareContext(options) {
+  const context = await super._prepareContext(options);
+
+  // Tabs vorbereiten
+  context.tabs = this._prepareTabs("primary");
+
+  return context;
+}
+
+_prepareTabs(group) {
+  const tabs = {
+    eigenschaften: {
+      id: "eigenschaften",
+      group: "primary",
+      icon: "fas fa-user",
+      label: "Eigenschaften",
+      active: this.tabGroups.primary === "eigenschaften",
+      cssClass: this.tabGroups.primary === "eigenschaften" ? "active" : ""
+    },
+    inventar: {
+      id: "inventar",
+      group: "primary",
+      icon: "fas fa-suitcase",
+      label: "Inventar",
+      active: this.tabGroups.primary === "inventar",
+      cssClass: this.tabGroups.primary === "inventar" ? "active" : ""
+    }
+  };
+  return tabs;
+}
+
+TAB-NAVIGATION TEMPLATE:
+------------------------
+Foundry bietet ein Standard-Template: templates/generic/tab-navigation.hbs
+
+Es erwartet ein tabs-Objekt im Kontext:
+{{> "templates/generic/tab-navigation.hbs" tabs=tabs}}
+
+TAB WECHSELN:
+-------------
+// Programmatisch
+this.changeTab("inventar", "primary");
+
+================================================================================
+10. MIGRATION VON V1 ZU V2
+================================================================================
+
+SCHRITT-FÜR-SCHRITT ANLEITUNG:
+
+1. IMPORT ÄNDERN
+----------------
+// V1 (ALT):
+class MeineApp extends FormApplication { }
+
+// V2 (NEU):
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+class MeineApp extends HandlebarsApplicationMixin(ApplicationV2) { }
+
+2. defaultOptions → DEFAULT_OPTIONS
+-----------------------------------
+// V1 (ALT):
+static get defaultOptions() {
+  return foundry.utils.mergeObject(super.defaultOptions, {
+    id: "meine-app",
+    title: "Mein Titel",
+    template: "modules/modul/template.hbs",
+    width: 600,
+    height: 400,
+    resizable: true,
+    classes: ["meine-klasse"]
+  });
+}
+
+// V2 (NEU):
+static DEFAULT_OPTIONS = {
+  id: "meine-app",
+  tag: "form",  // Wenn Form-Handling benötigt
+  classes: ["meine-klasse"],
+  window: {
+    title: "Mein Titel",
+    resizable: true
+  },
+  position: {
+    width: 600,
+    height: 400
+  },
+  form: {
+    handler: MeineApp.#onFormSubmit,
+    closeOnSubmit: true
+  }
+};
+
+static PARTS = {
+  form: {
+    template: "modules/modul/template.hbs"
+  }
+};
+
+3. getData() → _prepareContext()
+--------------------------------
+// V1 (ALT):
+getData() {
+  return {
+    items: this.object.items,
+    name: this.object.name
+  };
+}
+
+// V2 (NEU):
+async _prepareContext(options) {
+  return {
+    items: this.document.items,
+    name: this.document.name
+  };
+}
+
+4. activateListeners() → _onRender() + Actions
+----------------------------------------------
+// V1 (ALT):
+activateListeners(html) {
+  super.activateListeners(html);
+  html.find(".edit-btn").click(this._onEdit.bind(this));
+  html.find(".delete-btn").click(this._onDelete.bind(this));
+}
+
+// V2 (NEU):
+// Actions in DEFAULT_OPTIONS definieren
+static DEFAULT_OPTIONS = {
+  actions: {
+    edit: MeineApp.#onEdit,
+    delete: MeineApp.#onDelete
+  }
+};
+
+// Template ändern
+<button data-action="edit">Edit</button>
+<button data-action="delete">Delete</button>
+
+// Handler als statische Methoden
+static #onEdit(event, target) {
+  // this zeigt immer noch auf die Instanz
+}
+
+// Für non-click Events: _onRender verwenden
+_onRender(context, options) {
+  this.element.querySelector("input[name=search]")
+    .addEventListener("input", this.#onSearch.bind(this));
+}
+
+5. _updateObject() → form.handler
+---------------------------------
+// V1 (ALT):
+async _updateObject(event, formData) {
+  await this.object.update(formData);
+}
+
+// V2 (NEU):
+static async #onFormSubmit(event, form, formData) {
+  await this.document.update(formData.object);
+}
+
+6. TEMPLATE ANPASSEN
+--------------------
+// V1 (ALT):
+<form class="meine-form">
+  <input name="name" value="{{name}}">
+  <button type="submit">Speichern</button>
+</form>
+
+// V2 (NEU):
+<div class="meine-form">
+  <input name="name" value="{{name}}">
+  <button type="submit">Speichern</button>
+</div>
+
+7. JQUERY ENTFERNEN
+-------------------
+// V1 (ALT):
+activateListeners(html) {
+  html.find(".item").on("click", ...);
+}
+
+// V2 (NEU):
+_onRender(context, options) {
+  this.element.querySelectorAll(".item").forEach(el => {
+    el.addEventListener("click", ...);
+  });
+}
+
+// Oder jQuery manuell hinzufügen falls nötig:
+_onRender(context, options) {
+  const html = $(this.element);
+  html.find(".item").on("click", ...);
+}
+
+================================================================================
+11. HÄUFIGE FEHLER UND TIPPS
+================================================================================
+
+FEHLER 1: Leeres formData
+-------------------------
+Problem: formData.object ist leer
+Lösung: Entferne <form>-Tags aus dem Template wenn tag: "form" verwendet wird
+
+FEHLER 2: Actions funktionieren nicht
+-------------------------------------
+Problem: Click auf Button macht nichts
+Lösungen:
+- Prüfe ob data-action im HTML korrekt ist
+- Prüfe ob Action in DEFAULT_OPTIONS.actions registriert ist
+- Prüfe ob Methode statisch ist
+
+FEHLER 3: CONFIG-Werte undefined
+--------------------------------
+Problem: CONFIG.DCC.whatever ist undefined in PARTS
+Grund: Statische Eigenschaften werden vor init ausgewertet
+Lösung: Hardcoded Pfade verwenden
+
+// FALSCH:
+static PARTS = {
+  form: { template: CONFIG.DCC.templatePath + "/form.hbs" }
+};
+
+// RICHTIG:
+static PARTS = {
+  form: { template: "systems/dcc/templates/form.hbs" }
+};
+
+FEHLER 4: this ist undefined
+----------------------------
+Problem: this.document ist undefined im Handler
+Grund: Methode nicht als statisch definiert oder falsch gebunden
+Lösung: Actions als statische Methoden, 'this' wird automatisch gebunden
+
+TIPP 1: Partial Re-Render
+-------------------------
+Nur bestimmte PARTS neu rendern:
+this.render({ parts: ["content"] });
+
+TIPP 2: Scroll-Position behalten
+--------------------------------
+static PARTS = {
+  liste: {
+    template: "...",
+    scrollable: [".scroll-container"]
+  }
+};
+
+TIPP 3: Document Sheet
+----------------------
+Für Actor/Item Sheets nutze DocumentSheetV2:
+class MeinActorSheet extends foundry.applications.sheets.ActorSheetV2 { }
+
+TIPP 4: Dynamischer Titel
+-------------------------
+get title() {
+  return `${this.document.name} - Bearbeiten`;
+}
+
+TIPP 5: Mehrere Instanzen
+-------------------------
+Jede Application braucht eine eindeutige ID:
+static DEFAULT_OPTIONS = {
+  id: "meine-app-{id}"  // {id} wird durch document.id ersetzt
+};
+
+================================================================================
+12. VOLLSTÄNDIGE BEISPIELE
+================================================================================
+
+BEISPIEL 1: EINFACHES FORMULAR
+------------------------------
+
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+class SettingsDialog extends HandlebarsApplicationMixin(ApplicationV2) {
+
+  static DEFAULT_OPTIONS = {
+    id: "settings-dialog",
+    tag: "form",
+    classes: ["settings-dialog"],
+    window: {
+      title: "Einstellungen",
+      icon: "fas fa-cog",
+      resizable: false
+    },
+    position: {
+      width: 400,
+      height: "auto"
+    },
+    form: {
+      handler: SettingsDialog.#onSubmit,
+      closeOnSubmit: true
+    }
+  };
+
+  static PARTS = {
+    form: {
+      template: "modules/mein-modul/templates/settings.hbs"
+    }
+  };
+
+  async _prepareContext(options) {
+    return {
+      soundEnabled: game.settings.get("mein-modul", "soundEnabled"),
+      volume: game.settings.get("mein-modul", "volume")
+    };
+  }
+
+  static async #onSubmit(event, form, formData) {
+    const data = formData.object;
+    await game.settings.set("mein-modul", "soundEnabled", data.soundEnabled);
+    await game.settings.set("mein-modul", "volume", data.volume);
+    ui.notifications.info("Einstellungen gespeichert!");
+  }
+}
+
+// Template (settings.hbs):
+<div class="form-group">
+  <label>Sound aktiviert</label>
+  <input type="checkbox" name="soundEnabled" {{#if soundEnabled}}checked{{/if}}>
+</div>
+<div class="form-group">
+  <label>Lautstärke</label>
+  <input type="range" name="volume" min="0" max="100" value="{{volume}}">
+</div>
+<button type="submit">
+  <i class="fas fa-save"></i> Speichern
+</button>
+
+
+BEISPIEL 2: LISTE MIT ACTIONS
+-----------------------------
+
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+class ItemBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
+
+  constructor(items) {
+    super();
+    this.items = items;
+  }
+
+  static DEFAULT_OPTIONS = {
+    id: "item-browser",
+    classes: ["item-browser"],
+    window: {
+      title: "Item Browser",
+      resizable: true
+    },
+    position: {
+      width: 600,
+      height: 500
+    },
+    actions: {
+      viewItem: ItemBrowser.#onViewItem,
+      addItem: ItemBrowser.#onAddItem,
+      search: ItemBrowser.#onSearch
+    }
+  };
+
+  static PARTS = {
+    header: {
+      template: "modules/mein-modul/templates/browser-header.hbs"
+    },
+    list: {
+      template: "modules/mein-modul/templates/browser-list.hbs",
+      scrollable: [""]
+    }
+  };
+
+  async _prepareContext(options) {
+    return {
+      items: this.items,
+      searchTerm: this.searchTerm || ""
+    };
+  }
+
+  static #onViewItem(event, target) {
+    const itemId = target.dataset.itemId;
+    const item = this.items.find(i => i.id === itemId);
+    if (item) item.sheet.render(true);
+  }
+
+  static async #onAddItem(event, target) {
+    const itemId = target.dataset.itemId;
+    const item = this.items.find(i => i.id === itemId);
+    if (item) {
+      await game.user.character?.createEmbeddedDocuments("Item", [item.toObject()]);
+      ui.notifications.info(`${item.name} hinzugefügt!`);
+    }
+  }
+
+  static #onSearch(event, target) {
+    this.searchTerm = target.value;
+    this.render({ parts: ["list"] });  // Nur Liste neu rendern
+  }
+
+  _onRender(context, options) {
+    // Für Input-Events brauchen wir _onRender
+    this.element.querySelector("input[name=search]")
+      ?.addEventListener("input", (e) => {
+        this.searchTerm = e.target.value;
+        this.render({ parts: ["list"] });
+      });
+  }
+}
+
+// Template (browser-header.hbs):
+<div class="browser-header">
+  <input type="text" name="search" placeholder="Suchen..." value="{{searchTerm}}">
+</div>
+
+// Template (browser-list.hbs):
+<div class="item-list">
+  {{#each items}}
+    <div class="item-entry">
+      <img src="{{this.img}}" alt="{{this.name}}">
+      <span class="name">{{this.name}}</span>
+      <div class="buttons">
+        <button type="button" data-action="viewItem" data-item-id="{{this.id}}">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button type="button" data-action="addItem" data-item-id="{{this.id}}">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+  {{/each}}
+</div>
+
+
+BEISPIEL 3: ACTOR SHEET MIT TABS
+--------------------------------
+
+class MeinActorSheet extends foundry.applications.sheets.ActorSheetV2 {
+
+  static DEFAULT_OPTIONS = {
+    classes: ["mein-system", "actor-sheet"],
+    position: {
+      width: 700,
+      height: 600
+    },
+    window: {
+      resizable: true
+    },
+    actions: {
+      editItem: MeinActorSheet.#onEditItem,
+      deleteItem: MeinActorSheet.#onDeleteItem,
+      rollAttribute: MeinActorSheet.#onRollAttribute
+    }
+  };
+
+  static PARTS = {
+    header: {
+      template: "systems/mein-system/templates/actor/header.hbs"
+    },
+    tabs: {
+      template: "templates/generic/tab-navigation.hbs"
+    },
+    attributes: {
+      template: "systems/mein-system/templates/actor/attributes.hbs"
+    },
+    inventory: {
+      template: "systems/mein-system/templates/actor/inventory.hbs",
+      scrollable: [".item-list"]
+    },
+    biography: {
+      template: "systems/mein-system/templates/actor/biography.hbs",
+      scrollable: [""]
+    }
+  };
+
+  // Standard-Tab
+  tabGroups = {
+    primary: "attributes"
+  };
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+
+    // Actor-Daten
+    context.system = this.document.system;
+    context.items = this.document.items;
+
+    // Tabs vorbereiten
+    context.tabs = this._prepareTabs();
+
+    // Biografie enrichen (für HTML-Rendering)
+    context.enrichedBio = await TextEditor.enrichHTML(
+      this.document.system.biography,
+      { async: true }
+    );
+
+    return context;
+  }
+
+  _prepareTabs() {
+    return {
+      attributes: {
+        id: "attributes",
+        group: "primary",
+        icon: "fas fa-dice-d20",
+        label: "Attribute",
+        active: this.tabGroups.primary === "attributes",
+        cssClass: this.tabGroups.primary === "attributes" ? "active" : ""
+      },
+      inventory: {
+        id: "inventory",
+        group: "primary",
+        icon: "fas fa-suitcase",
+        label: "Inventar",
+        active: this.tabGroups.primary === "inventory",
+        cssClass: this.tabGroups.primary === "inventory" ? "active" : ""
+      },
+      biography: {
+        id: "biography",
+        group: "primary",
+        icon: "fas fa-book",
+        label: "Biografie",
+        active: this.tabGroups.primary === "biography",
+        cssClass: this.tabGroups.primary === "biography" ? "active" : ""
+      }
+    };
+  }
+
+  static #onEditItem(event, target) {
+    const itemId = target.closest("[data-item-id]").dataset.itemId;
+    const item = this.document.items.get(itemId);
+    item?.sheet.render(true);
+  }
+
+  static async #onDeleteItem(event, target) {
+    const itemId = target.closest("[data-item-id]").dataset.itemId;
+    const item = this.document.items.get(itemId);
+    if (!item) return;
+
+    const confirm = await Dialog.confirm({
+      title: "Item löschen",
+      content: `<p>${item.name} wirklich löschen?</p>`
+    });
+
+    if (confirm) {
+      await this.document.deleteEmbeddedDocuments("Item", [itemId]);
+    }
+  }
+
+  static async #onRollAttribute(event, target) {
+    const attr = target.dataset.attribute;
+    const value = this.document.system.attributes[attr].value;
+
+    const roll = await new Roll("1d20 + @mod", { mod: value }).evaluate();
+    roll.toMessage({
+      speaker: ChatMessage.getSpeaker({ actor: this.document }),
+      flavor: `${attr.toUpperCase()} Wurf`
+    });
+  }
+}
+
+================================================================================
+WEITERFÜHRENDE RESSOURCEN
+================================================================================
+
+OFFIZIELLE DOKUMENTATION:
+- API: https://foundryvtt.com/api/classes/foundry.applications.api.ApplicationV2.html
+- HandlebarsApplicationMixin: https://foundryvtt.com/api/functions/foundry.applications.api.HandlebarsApplicationMixin.html
+- DocumentSheetV2: https://foundryvtt.com/api/classes/foundry.applications.api.DocumentSheetV2.html
+
+COMMUNITY WIKI:
+- ApplicationV2: https://foundryvtt.wiki/en/development/api/applicationv2
+- Conversion Guide: https://foundryvtt.wiki/en/development/guides/applicationV2-conversion-guide
+- Tabs in AppV2: https://foundryvtt.wiki/en/development/guides/Tabs-and-Templates/Tabs-in-AppV2
+
+================================================================================

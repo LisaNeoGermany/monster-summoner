@@ -1,0 +1,30 @@
+{
+  "MONSTER_SUMMONER": {
+    "Settings": {
+      "MonsterSubfolders": {
+        "Name": "Monster Subfolders",
+        "Hint": "Comma-separated list of folder IDs for monster subfolders."
+      },
+      "SummonSound": {
+        "Name": "Sound File Path",
+        "Hint": "Path to the sound file played when summoning."
+      },
+      "SummonAnimation": {
+        "Name": "Animation Path",
+        "Hint": "Path to the animation (e.g. JB2A) used when summoning."
+      }
+    },
+    "Dialog": {
+      "Title": "Summon Monster",
+      "SelectType": "Select Monster Type",
+      "Quantity": "Quantity",
+      "Back": "Back",
+      "Summon": "Summon",
+      "NoSelection": "No monsters selected!",
+      "Place": "Place: {name} ({current}/{total})",
+      "Selection": "Selection",
+      "Clear": "Clear",
+      "Add": "Add"
+    }
+  }
+}

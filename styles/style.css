@@ -1,0 +1,278 @@
+.summoner-title-row {
+  text-align: center;
+  font-size: 1.35em;
+  font-weight: bold;
+  margin: 8px 0 20px 0;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+}
+
+.summoner-folder-title {
+  font-size: 1.35em;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.form-footer.flex-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.footer-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.42em;
+  background: #e5e5e5;
+  color: #222;
+  font-weight: bold;
+  border: 1.5px solid #b3b3b3;
+  border-radius: 8px;
+  padding: 9px 28px 9px 20px;
+  font-size: 1.09em;
+  box-shadow: 0 1px 2px rgba(90,90,90,0.04);
+  cursor: pointer;
+  transition: background 0.16s, border 0.16s, color 0.15s;
+  min-width: 135px;
+  justify-content: center;
+}
+.footer-btn i.fas {
+  font-size: 1em;
+}
+.footer-btn:hover, .footer-btn:focus {
+  background: #d6d6d6;
+  border-color: #888;
+  color: #0050c8;
+  outline: none;
+}
+
+.summon-btn {
+  margin-left: auto;
+}
+.back-to-root-btn {
+  margin-right: auto;
+}
+
+.monster-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  padding: 10px;
+}
+
+.monster-entry {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1.5px solid #bbb;
+  border-radius: 10px;
+  padding: 8px 4px 7px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+  max-width: 150px;
+}
+
+.monster-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 30px;
+  margin-bottom: 8px;
+  border: 2px solid #888;
+  background: #fff;
+}
+
+.monster-info {
+  font-size: 0.97rem;
+}
+
+.monster-info strong {
+  font-size: 1.04em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.monster-info label {
+  font-size: 0.87rem;
+  margin-top: 4px;
+}
+
+.monster-info input[type="number"] {
+  width: 45px;
+  padding: 1px 4px;
+  border-radius: 5px;
+  border: 1px solid #aaa;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+.monster-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.add-btn {
+  background: #4a9eff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background 0.15s;
+}
+
+.add-btn:hover {
+  background: #2d7cd6;
+}
+
+.monster-entry.in-selection {
+  border-color: #4a9eff;
+  background: rgba(74, 158, 255, 0.1);
+}
+
+.selection-badge {
+  background: #4a9eff;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+/* Selection Panel */
+.selection-panel {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px;
+}
+
+.selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.clear-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background 0.15s;
+}
+
+.clear-btn:hover {
+  background: #ee5a5a;
+}
+
+.selection-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selection-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.selection-item img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.selection-name {
+  font-size: 0.85em;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selection-count {
+  font-weight: bold;
+  font-size: 0.85em;
+  color: #4a9eff;
+}
+
+.remove-btn {
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 2px;
+  font-size: 0.9em;
+  transition: color 0.15s;
+}
+
+.remove-btn:hover {
+  color: #ff6b6b;
+}
+
+/* Monster-Typ-Übersicht: genau 3 nebeneinander! */
+.summoner-subfolders {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  justify-items: center;
+  align-items: stretch;
+  padding: 8px 10px 10px 10px;
+  margin-bottom: 5px;
+}
+
+.monster-type-btn {
+  width: 100%;
+  background: #ececec;
+  border: none;
+  border-radius: 11px;
+  padding: 18px 0 18px 0;
+  font-size: 1.13em;
+  font-weight: 700;
+  color: #222;
+  cursor: pointer;
+  box-shadow: 0 1.5px 8px rgba(50,60,80,0.05);
+  transition: background 0.13s, color 0.13s, box-shadow 0.14s;
+  text-align: center;
+  outline: none;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.monster-type-btn:hover,
+.monster-type-btn:focus {
+  background: #dbe4fd;
+  color: #0c2c66;
+  box-shadow: 0 3px 14px rgba(20,60,130,0.07);
+}
+
+/* --- Nicht mehr benötigt, falls du sie noch drin hattest --- */
+.summoner-folder-entry,
+.subfolder-link,
+.subfolder-link:focus,
+.subfolder-link:hover,
+.subfolder-link i.fas.fa-folder {
+  display: none !important;
+}

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:foundryvtt.wiki)",
+      "WebFetch(domain:foundryvtt.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

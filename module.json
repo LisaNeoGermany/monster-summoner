@@ -1,0 +1,40 @@
+{
+  "id": "monster-summoner",
+  "title": "Monster Summoner",
+  "description": "Beschwöre Monster aus einem Ordner mit Sound und Animation.",
+  "version": "1.1.0",
+  "authors": [
+    {
+      "name": "Dein Name",
+      "url": "https://github.com/deinGithub"
+    }
+  ],
+  "compatibility": {
+    "minimum": "10",
+    "verified": "14"
+  },
+  "socket": true,
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/style.css"
+  ],
+  "scripts": [],
+  "packs": [],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    },
+    {
+      "lang": "de",
+      "name": "Deutsch",
+      "path": "languages/de.json"
+    }
+  ],
+  "url": "https://github.com/deinGithub/monster-summoner",
+  "manifest": "modules/monster-summoner/module.json",
+  "download": "https://github.com/deinGithub/monster-summoner/archive/main.zip"
+}

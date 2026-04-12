@@ -1,0 +1,30 @@
+{
+  "MONSTER_SUMMONER": {
+    "Settings": {
+      "MonsterSubfolders": {
+        "Name": "Monster Unterordner",
+        "Hint": "Komma-separierte Liste der Folder-IDs der Monster-Unterordner."
+      },
+      "SummonSound": {
+        "Name": "Sound-Datei Pfad",
+        "Hint": "Pfad zur Sound-Datei, die beim Beschwören abgespielt wird."
+      },
+      "SummonAnimation": {
+        "Name": "Animationspfad",
+        "Hint": "Pfad zur Animation (z. B. JB2A), die beim Beschwören verwendet wird."
+      }
+    },
+    "Dialog": {
+      "Title": "Monster beschwören",
+      "SelectType": "Wähle den Monster Typ",
+      "Quantity": "Anzahl",
+      "Back": "Zurück",
+      "Summon": "Beschwören",
+      "NoSelection": "Keine Monster ausgewählt!",
+      "Place": "Platziere: {name} ({current}/{total})",
+      "Selection": "Auswahl",
+      "Clear": "Leeren",
+      "Add": "Hinzufügen"
+    }
+  }
+}

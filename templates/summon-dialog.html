@@ -1,0 +1,74 @@
+<div class="summon-monster-form">
+  <div class="summoner-title-row">
+    {{#if currentFolder}}
+      <span class="summoner-folder-title">{{currentFolder.name}}</span>
+    {{else}}
+      <span class="summoner-folder-title">{{i18n.selectType}}</span>
+    {{/if}}
+  </div>
+
+  <div class="summoner-subfolders">
+    {{#each subfolders as |folder|}}
+      <button type="button" class="monster-type-btn" data-action="openFolder" data-folder-id="{{folder.id}}">
+        {{folder.name}}
+      </button>
+    {{/each}}
+  </div>
+
+  <div class="monster-grid">
+    {{#each monsters as |monster|}}
+      <div class="monster-entry {{#if monster.inSelection}}in-selection{{/if}}" data-actor-id="{{monster.id}}">
+        <img src="{{monster.img}}" alt="{{monster.name}}" class="monster-img" />
+        <div class="monster-info">
+          <strong>{{monster.name}}</strong>
+          <div>CR: {{monster.cr}}</div>
+          <div class="monster-controls">
+            <input type="number" name="count-{{monster.id}}" value="1" min="1" />
+            <button type="button" class="add-btn" data-action="addToSelection" data-actor-id="{{monster.id}}">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          {{#if monster.inSelection}}
+            <div class="selection-badge">{{monster.selectionCount}}x</div>
+          {{/if}}
+        </div>
+      </div>
+    {{/each}}
+  </div>
+
+  {{#if hasSelection}}
+    <div class="selection-panel">
+      <div class="selection-header">
+        <span>{{i18n.selection}} ({{totalCount}})</span>
+        <button type="button" class="clear-btn" data-action="clearSelection">
+          <i class="fas fa-trash"></i> {{i18n.clear}}
+        </button>
+      </div>
+      <div class="selection-list">
+        {{#each selection as |item|}}
+          <div class="selection-item">
+            <img src="{{item.img}}" alt="{{item.name}}" />
+            <span class="selection-name">{{item.name}}</span>
+            <span class="selection-count">x{{item.count}}</span>
+            <button type="button" class="remove-btn" data-action="removeFromSelection" data-actor-id="{{item.id}}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+
+  <div class="form-footer flex-footer">
+    {{#if currentFolder}}
+      <button type="button" class="footer-btn" data-action="backToRoot">
+        <i class="fas fa-arrow-left"></i> {{i18n.back}}
+      </button>
+    {{/if}}
+    {{#if hasSelection}}
+      <button type="submit" class="footer-btn summon-btn">
+        <i class="fas fa-check"></i> {{i18n.summon}} ({{totalCount}})
+      </button>
+    {{/if}}
+  </div>
+</div>
